@@ -28,7 +28,7 @@ class ApiData {
       final body = await response.transform(utf8.decoder).join();
       final jsonBody = jsonDecode(body);
       jsonBody['data'].forEach((data) {
-        print(data['team']);
+        print("This player's team is :${data['team']}");
         Team team = Team(
             name: data['team']['full_name'],
             tid: data['team']['id'].toString());
