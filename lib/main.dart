@@ -49,7 +49,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    String playerName = "Keenan Evans";
+    String playerName = "a";
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
@@ -70,15 +70,22 @@ class _MyHomePageState extends State<MyHomePage> {
                 onPressed: () async {
                   QuerySnapshot playerRef = await FirebaseFirestore.instance
                       .collection('players')
-                      .where('name', isEqualTo: 'Alex Abrines')
+                      .where('name', isEqualTo: 'Gary Trent Jr.')
+                      // .where('name', isLessThanOrEqualTo: 'a+ \uf8ff')
                       .get();
-                  DocumentReference teamRef =
-                      playerRef.docs[0]['team'] as DocumentReference;
+
+                  playerRef.docs.forEach((playerDoc) {
+                    DocumentReference teamRef =
+                        playerDoc['team'] as DocumentReference;
+                    teamRef.get().then((teamData) {
+                      print(teamData['name']);
+                    });
+                  });
 
                   // print(playerRef.docs[0]['team']);
-                  teamRef.get().then((value) {
-                    print("${value['name']} ${value['tid']}");
-                  });
+                  // teamRef.get().then((value) {
+                  //   print("${value['name']} ${value['tid']}");
+                  // });
                 },
                 child: Text("Get player")),
           ],

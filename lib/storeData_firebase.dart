@@ -24,7 +24,7 @@ getPlayer(String name) async {
       .withConverter(
           fromFirestore: Player.fromFirestore,
           toFirestore: (Player player, _) => player.toFirestore())
-      .where("name", isEqualTo: name);
+      .where("name", arrayContains: name);
   QuerySnapshot playerSnapshot = await playerRef.get();
   print(playerSnapshot.docs);
 }
