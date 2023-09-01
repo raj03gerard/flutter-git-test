@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:postgres_api/blocs/playerBloc.dart';
 import 'package:postgres_api/firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'ApiData.dart';
 import 'storeData.dart';
 import 'storeData_firebase.dart';
+import 'dataOperations/getAllPlayers.dart';
+import 'package:postgres_api/MyBlocs/myPlayerBloc.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -41,87 +44,91 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
 
+  PlayerBloc playerBloc = PlayerBloc();
+  MyPlayerBloc myPlayerBloc = MyPlayerBloc();
   void _incrementCounter() {
+    myPlayerBloc.fetchPlayer("Boston Celtics");
     setState(() {
       _counter++;
     });
   }
 
   @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    playerBloc.eventSink.add(PlayerEvents.Fetch);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    String playerName = "a";
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: Text(widget.title),
       ),
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
+        child: SingleChildScrollView(
+          child: Container(
+            height: 400,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                const Text(
+                  'You have pushed the button this many times:',
+                ),
+                Text(
+                  '$_counter',
+                  style: Theme.of(context).textTheme.headlineMedium,
+                ),
+                StreamBuilder<QuerySnapshot>(
+                  stream: myPlayerBloc.playerStream,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return CircularProgressIndicator(); // Return a loading indicator while data is being fetched.
+                    } else if (snapshot.hasError) {
+                      return Text('Error: ${snapshot.error}');
+                    } else if (!snapshot.hasData || snapshot.data == null) {
+                      return Text('No data available');
+                    }
+
+                    // DocumentReference sp = snapshot.data! as DocumentReference;
+                    // var playerData=  sp.get();
+                    // if (sp.docs.isEmpty) {
+                    //   return Text('No players found');
+                    // }
+                    return Expanded(
+                      child: Container(
+                        height: 500,
+                        child: ListView.builder(
+                            itemCount: snapshot.data?.docs.length,
+                            itemBuilder: (context, index) {
+                              return Row(
+                                children: [
+                                  Text(snapshot.data!.docs[index]['name']
+                                      .toString()),
+                                  Expanded(
+                                    child: Text(snapshot
+                                        .data!.docs[index]['team']
+                                        .toString()),
+                                  ),
+                                ],
+                              );
+                            }),
+                      ),
+                    );
+
+                    // Provide a default value if 'name' is not available.
+                  },
+                )
+              ],
             ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            FilledButton(
-                onPressed: () async {
-                  QuerySnapshot playerRef = await FirebaseFirestore.instance
-                      .collection('players')
-                      .where('name', isEqualTo: 'Gary Trent Jr.')
-                      // .where('name', isLessThanOrEqualTo: 'a+ \uf8ff')
-                      .get();
-
-                  playerRef.docs.forEach((playerDoc) {
-                    DocumentReference teamRef =
-                        playerDoc['team'] as DocumentReference;
-                    teamRef.get().then((teamData) {
-                      print(teamData['name']);
-                    });
-                  });
-
-                  // print(playerRef.docs[0]['team']);
-                  // teamRef.get().then((value) {
-                  //   print("${value['name']} ${value['tid']}");
-                  // });
-                },
-                child: Text("Get player")),
-            FilledButton(
-                onPressed: () async {
-                  QuerySnapshot playerRef = await FirebaseFirestore.instance
-                      .collection('players')
-                      .where('name', isEqualTo: 'Billy Preston')
-                      // .where('name', isLessThanOrEqualTo: 'a+ \uf8ff')
-                      .get();
-
-                  playerRef.docs.forEach((playerDoc) {
-                    DocumentReference teamRef =
-                        playerDoc['team'] as DocumentReference;
-                    teamRef.get().then((teamData) {
-                      print(teamData['name']);
-                    });
-                  });
-
-                  // print(playerRef.docs[0]['team']);
-                  // teamRef.get().then((value) {
-                  //   print("${value['name']} ${value['tid']}");
-                  // });
-                },
-                child: Text("Get player")),
-            const Text(
-              'He has rendered himself today, the Greatest of all time',
-            ),
-          ],
+          ),
         ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
           _incrementCounter();
-          await ApiData().getAPIData();
-          getPlayer("Billy Preston");
-          // await StoreData.saveData();
         },
         tooltip: 'Increment',
         child: const Icon(Icons.add),

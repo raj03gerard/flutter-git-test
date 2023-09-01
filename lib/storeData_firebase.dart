@@ -18,15 +18,16 @@ uploadPlayer(Player player, Team team) async {
       {'team': FirebaseFirestore.instance.collection("teams").doc(team.tid)});
 }
 
-getPlayer(String name) async {
+Future<QuerySnapshot> getPlayer(String name) async {
   var playerRef = await FirebaseFirestore.instance
       .collection("players")
       .withConverter(
           fromFirestore: Player.fromFirestore,
           toFirestore: (Player player, _) => player.toFirestore())
-      .where("name", arrayContains: name);
+      .where("name", isEqualTo: name);
   QuerySnapshot playerSnapshot = await playerRef.get();
-  print(playerSnapshot.docs);
+
+  return playerSnapshot;
 }
 
 uploadTeam(Team team) async {
