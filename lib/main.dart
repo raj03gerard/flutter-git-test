@@ -110,6 +110,9 @@ class _MyHomePageState extends State<MyHomePage> {
                   // });
                 },
                 child: Text("Get player")),
+            const Text(
+              'Custom Text',
+            ),
           ],
         ),
       ),
