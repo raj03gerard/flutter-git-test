@@ -111,7 +111,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 },
                 child: Text("Get player")),
             const Text(
-              'Custom Text',
+              'He has rendered himself today, the Greatest of all time',
             ),
           ],
         ),
