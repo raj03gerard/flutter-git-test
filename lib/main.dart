@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:postgres_api/blocs/playerBloc.dart';
 import 'package:postgres_api/firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:postgres_api/weirdBloc/states/playerStates.dart';
 import 'ApiData.dart';
 import 'storeData.dart';
 import 'storeData_firebase.dart';
 import 'dataOperations/getAllPlayers.dart';
 import 'package:postgres_api/MyBlocs/myPlayerBloc.dart';
+import 'weirdBloc/blocs/playerBloc.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -43,11 +46,11 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
-
+  late PlayersBloc playersBloc;
   PlayerBloc playerBloc = PlayerBloc();
   MyPlayerBloc myPlayerBloc = MyPlayerBloc();
   void _incrementCounter() {
-    myPlayerBloc.fetchPlayer("Boston Celtics");
+    // myPlayerBloc.fetchPlayer("Boston Celtics");
     setState(() {
       _counter++;
     });
@@ -55,9 +58,15 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   void initState() {
-    // TODO: implement initState
+    playersBloc = PlayersBloc();
     super.initState();
     playerBloc.eventSink.add(PlayerEvents.Fetch);
+  }
+
+  @override
+  void dispose() {
+    playersBloc.close();
+    super.dispose();
   }
 
   @override
@@ -81,45 +90,56 @@ class _MyHomePageState extends State<MyHomePage> {
                   '$_counter',
                   style: Theme.of(context).textTheme.headlineMedium,
                 ),
-                StreamBuilder<QuerySnapshot>(
-                  stream: myPlayerBloc.playerStream,
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return CircularProgressIndicator(); // Return a loading indicator while data is being fetched.
-                    } else if (snapshot.hasError) {
-                      return Text('Error: ${snapshot.error}');
-                    } else if (!snapshot.hasData || snapshot.data == null) {
-                      return Text('No data available');
-                    }
-
-                    // DocumentReference sp = snapshot.data! as DocumentReference;
-                    // var playerData=  sp.get();
-                    // if (sp.docs.isEmpty) {
-                    //   return Text('No players found');
-                    // }
-                    return Expanded(
-                      child: Container(
-                        height: 500,
-                        child: ListView.builder(
-                            itemCount: snapshot.data?.docs.length,
-                            itemBuilder: (context, index) {
-                              return Row(
-                                children: [
-                                  Text(snapshot.data!.docs[index]['name']
-                                      .toString()),
-                                  Expanded(
-                                    child: Text(snapshot
-                                        .data!.docs[index]['team']
-                                        .toString()),
-                                  ),
-                                ],
-                              );
-                            }),
-                      ),
-                    );
-
-                    // Provide a default value if 'name' is not available.
+                BlocProvider(
+                  create: (BuildContext context) {
+                    return playersBloc;
                   },
+                  child: BlocBuilder<PlayersBloc, PlayerState>(
+                    builder: (context, state) {
+                      return StreamBuilder<QuerySnapshot>(
+                        stream: playersBloc.,
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return CircularProgressIndicator(); // Return a loading indicator while data is being fetched.
+                          } else if (snapshot.hasError) {
+                            return Text('Error: ${snapshot.error}');
+                          } else if (!snapshot.hasData ||
+                              snapshot.data == null) {
+                            return Text('No data available');
+                          }
+
+                          // DocumentReference sp = snapshot.data! as DocumentReference;
+                          // var playerData=  sp.get();
+                          // if (sp.docs.isEmpty) {
+                          //   return Text('No players found');
+                          // }
+                          return Expanded(
+                            child: Container(
+                              height: 500,
+                              child: ListView.builder(
+                                  itemCount: snapshot.data?.docs.length,
+                                  itemBuilder: (context, index) {
+                                    return Row(
+                                      children: [
+                                        Text(snapshot.data!.docs[index]['name']
+                                            .toString()),
+                                        Expanded(
+                                          child: Text(snapshot
+                                              .data!.docs[index]['team']
+                                              .toString()),
+                                        ),
+                                      ],
+                                    );
+                                  }),
+                            ),
+                          );
+
+                          // Provide a default value if 'name' is not available.
+                        },
+                      );
+                    },
+                  ),
                 )
               ],
             ),
