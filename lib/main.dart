@@ -88,6 +88,28 @@ class _MyHomePageState extends State<MyHomePage> {
                   // });
                 },
                 child: Text("Get player")),
+            FilledButton(
+                onPressed: () async {
+                  QuerySnapshot playerRef = await FirebaseFirestore.instance
+                      .collection('players')
+                      .where('name', isEqualTo: 'Billy Preston')
+                      // .where('name', isLessThanOrEqualTo: 'a+ \uf8ff')
+                      .get();
+
+                  playerRef.docs.forEach((playerDoc) {
+                    DocumentReference teamRef =
+                        playerDoc['team'] as DocumentReference;
+                    teamRef.get().then((teamData) {
+                      print(teamData['name']);
+                    });
+                  });
+
+                  // print(playerRef.docs[0]['team']);
+                  // teamRef.get().then((value) {
+                  //   print("${value['name']} ${value['tid']}");
+                  // });
+                },
+                child: Text("Get player")),
           ],
         ),
       ),
